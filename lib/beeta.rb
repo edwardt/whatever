@@ -26,6 +26,12 @@ class Beeta::App < Watts::App
 	include Beeta::Resource
 
 	resource('/', Discovery) {
-		resource("app", AppList) { resource(/^[-0-9a-z]$/i, App) }
+		resource("app", AppList) {
+			resource(/^[-0-9a-z]+$/i, App)
+		}
+
+		resource("user", UserList) {
+			resource(/^[0-9a-z]+$/i, User)
+		}
 	}
 end

@@ -5,11 +5,11 @@ require 'beeta/model'
 module Beeta::Resource
 	include Beeta
 
+	# The Generic resource, with some utility methods for the other Beeta
+	# resources.
 	class Generic < Watts::Resource
 		include Beeta
 
-		# TODO:  
-		
 		def error_404
 			@error_404 ||= json_resp({'error'=>'Not Found'}, 404)
 		end
@@ -46,13 +46,19 @@ module Beeta::Resource
 
 	class Discovery < Generic
 		get { |*_|
-			json_resp 'apps' => '/app'
+			json_resp 'apps' => '/app', 'users' => '/users'
 		}
 	end
 
+	# TODO:  These are all pretty similar; maybe a CRUD and a CRUDList
+	# superclass, but that depends on if we call gitolite from the models (I'm
+	# leaning towards yes) or we manage that through an intermediary, and also
+	# on auth.  We'll be using SSO ideally, although we may skip that for now.
+
 	class App < Generic
-		get { |name| Models::App[:name => name].to_json }
+		get { |name| json_resp Models::App[:name => name] }
 		put { |name|
+			# TODO:  Authorization.
 			a = Models::App[:name => name]
 			return error_404 unless a
 			a.set json_body
@@ -64,16 +70,39 @@ module Beeta::Resource
 	class AppList < Generic
 		get { json_resp Model::App.all }
 
+		# Not particularly married to POSTing to the app list, as a name must
+		# be supplied anyway, so just a PUT to /app/name might be more
+		# appropriate.
 		post {
+			# TODO:  Authentication, tagging the App as owned by the user that
+			# is posting the data.
 			unless json_body
 				return json_error('No body provided, or could not parse body.')
 			end
 
 			a = Model::App.new json_body
 			if !a.valid?
+				# TODO:  409 when the name is taken.
+				return json_resp(a.errors, 400)
 			end
 			return json_resp(a) if a.save
 			# TODO:  Provide git URI.
+		}
+	end
+
+	class UserList < Generic
+		get { |name| json_resp Models::User.all }
+		# TODO:  Use SSO.
+	end
+
+	class User < Generic
+		get { |name| json_resp Models::User[:name => name] }
+		put { |name|
+			a = Models::App[:name => name]
+			return error_404 unless a
+			a.set json_body
+			return json_resp(a) if a.save
+			# TODO:  Restart the app.
 		}
 	end
 end

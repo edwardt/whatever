@@ -1,0 +1,6 @@
+This is very alpha.  Most bits have not yet been wired in, and I think
+I've done probably as much of the API design as can actually be done
+without getting more bits working.
+
+So here it is, bits will be gotten to work, don't depend on anything in
+here, as nto a lot of it has been figured out yet.

@@ -1,5 +1,6 @@
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
+require './lib/beeta/config'
 
 $: << "#{File.dirname(__FILE__)}/lib"
 
@@ -52,4 +53,22 @@ task(:install => :package) {
 desc "Runs IRB, automatically require()ing #{spec.name}."
 task(:irb) {
 	exec "irb -Ilib -r#{spec.name}"
+}
+
+######
+task(:migrate) {
+	require 'sequel'
+	require 'sequel/extensions/migration'
+	Beeta::Config.load
+	Sequel.connect(Beeta::Config.db) { |db|
+		Sequel::Migrator.apply(db, './migrations')
+	}
+}
+
+task(:unicorn) {
+	sh "unicorn -c conf/unicorn.rb"
+}
+
+task(:daemon) {
+	sh "unicorn -D -c conf/unicorn.rb"
 }
